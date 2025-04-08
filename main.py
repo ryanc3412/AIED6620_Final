@@ -8,6 +8,7 @@ openai.api_key = "your_api_key"
 client = openai.OpenAI(api_key=openai.api_key)
 
 #loads the data from a text file
+#test
 def load_data(filepath):
     with open(filepath, "r") as f:
         lines = f.readlines()
