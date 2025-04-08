@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import os
 
-openai.api_key = "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"
+openai.api_key = "your_api_key"
 client = openai.OpenAI(api_key=openai.api_key)
 
 #loads the data from a text file
