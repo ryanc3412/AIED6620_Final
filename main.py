@@ -3,48 +3,8 @@ import faiss
 import pandas as pd
 import numpy as np
 import os
+from data_and_rag import load_data, embed_data, build_faiss_index, search_index, client
 
-openai.api_key = "your_api_key"
-client = openai.OpenAI(api_key=openai.api_key)
-
-#loads the data from a text file
-#test
-def load_data(filepath):
-    with open(filepath, "r") as f:
-        lines = f.readlines()
-    data = []
-    for line in lines:
-        if ":" in line:
-            code, content = line.strip().split(":", 1)
-            data.append({"code": code.strip(), "content": content.strip()})
-    return pd.DataFrame(data)
-
-#embeds the data using OpenAI's embedding model
-def get_embedding(text):
-    response = client.embeddings.create(
-        input=[text],
-        model="text-embedding-ada-002"
-    )
-    return response.data[0].embedding
-
-def embed_data(df):
-    df["embedding"] = df["content"].apply(get_embedding)
-    return df
-
-#faiss index creation to be able to search through vectors
-def build_faiss_index(embeddings):
-    dimension = len(embeddings[0])
-    index = faiss.IndexFlatL2(dimension)
-    matrix = np.array(embeddings).astype("float32")
-    index.add(matrix)
-    return index
-
-#searching the index for the best match
-def search_index(query, index, df):
-    query_vec = np.array(get_embedding(query)).astype("float32")
-    D, I = index.search(np.array([query_vec]), k=1)
-    best_index = I[0][0]
-    return df.iloc[best_index]
 
 #main
 def main():
@@ -58,8 +18,6 @@ def main():
     print("Building FAISS index...")
     index = build_faiss_index(df["embedding"].tolist())
 
-    print("\nSetup complete! You can now ask questions like 'How do I fix P0016?'\n")
-
     while True:
         query = input("Enter your error code question (or 'exit'): ")
         if query.lower() == "exit":
@@ -70,7 +28,8 @@ def main():
         #store original context separately for re-use
         original_context = (
             f"You are a Jeep diagnostic assistant. This is the info for code {result['code']}:\n\n"
-            f"{result['content']}\n\nAnswer user questions based on that. Keep it focused and practical."
+            f"{result['content']}\n\nAnswer user questions based on that. Keep it focused and practical,"
+            f"and don't ask them to make sure to enter more OBD code, they will if they need to."
         )
 
         chat_history = [
